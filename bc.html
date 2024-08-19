@@ -22,7 +22,7 @@
     async function startScanner() {
       try {
         // Check camera permission status
-        const status = await navigator.permissions.query({ name: 'camera' });
+const status = await navigator.permissions.query({ name: 'video' }); 
         if (status.state === 'granted') {
           await startScanningWithPermission();
         } else if (status.state === 'prompt') {
