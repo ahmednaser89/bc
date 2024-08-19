@@ -12,29 +12,34 @@
   </style>
 </head>
 <body>
-  <div id="interactive" class="viewport"></div>
+  <video id="interactive" class="viewport"></video>
 
-  <script src="https://rawgit.com/schmich/instascan-js/master/dist/instascan.min.js"></script>
+  <script src="https://unpkg.com/@zxing/library@latest/umd/index.js"></script>
   <script>
-    let scanner = new Instascan.Scanner({
-      video: document.getElementById('interactive'),
-      mirror: false
-    });
+    const selectedDeviceId = null;
+    const codeReader = new ZXing.BrowserMultiFormatReader();
 
-    scanner.addListener('scan', function (content) {
-      alert('Barcode detected: ' + content);
-      // Add your custom logic here to handle the barcode data
-    });
-
-    Instascan.Camera.getCameras().then(function (cameras) {
-      if (cameras.length > 0) {
-        scanner.start(cameras[0]);
-      } else {
-        alert('No cameras found.');
-      }
-    }).catch(function (e) {
-      alert(e);
-    });
+    codeReader.listVideoInputDevices()
+      .then((videoInputDevices) => {
+        const sourceSelect = videoInputDevices.filter(device => device.kind === 'videoinput');
+        if (sourceSelect.length > 0) {
+          codeReader.decodeFromVideoDevice(selectedDeviceId, 'interactive', (result, err) => {
+            if (result) {
+              alert(`Barcode detected: ${result.text}`);
+              // Add your custom logic here to handle the barcode data
+              console.log(result.text);
+            }
+            if (err) {
+              console.error(err);
+            }
+          });
+        } else {
+          console.error('No video devices found.');
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   </script>
 </body>
 </html>
