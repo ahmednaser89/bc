@@ -19,27 +19,38 @@
     const selectedDeviceId = null;
     const codeReader = new ZXing.BrowserMultiFormatReader();
 
-    codeReader.listVideoInputDevices()
-      .then((videoInputDevices) => {
-        const sourceSelect = videoInputDevices.filter(device => device.kind === 'videoinput');
-        if (sourceSelect.length > 0) {
-          codeReader.decodeFromVideoDevice(selectedDeviceId, 'interactive', (result, err) => {
-            if (result) {
-              alert(`Barcode detected: ${result.text}`);
-              // Add your custom logic here to handle the barcode data
-              console.log(result.text);
+    async function startScanner() {
+      try {
+        // Request camera access permission
+        await navigator.mediaDevices.getUserMedia({ video: true });
+
+        codeReader.listVideoInputDevices()
+          .then((videoInputDevices) => {
+            const sourceSelect = videoInputDevices.filter(device => device.kind === 'videoinput');
+            if (sourceSelect.length > 0) {
+              codeReader.decodeFromVideoDevice(selectedDeviceId, 'interactive', (result, err) => {
+                if (result) {
+                  alert(`Barcode detected: ${result.text}`);
+                  // Add your custom logic here to handle the barcode data
+                  console.log(result.text);
+                }
+                if (err) {
+                  console.error(err);
+                }
+              });
+            } else {
+              console.error('No video devices found.');
             }
-            if (err) {
-              console.error(err);
-            }
+          })
+          .catch((err) => {
+            console.error(err);
           });
-        } else {
-          console.error('No video devices found.');
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+      } catch (err) {
+        console.error('Error accessing camera:', err);
+      }
+    }
+
+    startScanner();
   </script>
 </body>
 </html>
