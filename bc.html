@@ -4,50 +4,64 @@
   <title>Thunkable Barcode Reader</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    #input-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    #barcode-image {
-      max-width: 100%;
-      max-height: 60vh;
-      margin-bottom: 1rem;
+    #interactive, #video, canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
   </style>
 </head>
 <body>
-  <div id="input-container">
-    <img id="barcode-image" src="#" alt="Barcode Image" hidden>
-    <input type="file" id="file-input" accept="image/*" />
-    <button id="process-button">Process Barcode</button>
-  </div>
+  <video id="interactive" class="viewport"></video>
 
   <script src="https://unpkg.com/@zxing/library@latest/umd/index.js"></script>
   <script>
-    const fileInput = document.getElementById('file-input');
-    const barcodeImage = document.getElementById('barcode-image');
-    const processButton = document.getElementById('process-button');
+    const selectedDeviceId = null;
+    const codeReader = new ZXing.BrowserMultiFormatReader();
 
-    processButton.addEventListener('click', async () => {
-      const file = fileInput.files[0];
-      if (file) {
-        barcodeImage.src = URL.createObjectURL(file);
-        barcodeImage.hidden = false;
-
-        const codeReader = new ZXing.BrowserMultiFormatReader();
-        try {
-          const result = await codeReader.decodeFromImage(barcodeImage);
-          alert(`Barcode detected: ${result.text}`);
-          // Add your custom logic here to handle the barcode data
-          console.log(result.text);
-        } catch (err) {
-          console.error('Error decoding barcode:', err);
+    async function startScanner() {
+      try {
+        // Check camera permission status
+        const status = await navigator.permissions.query({ name: 'camera' });
+        if (status.state === 'granted') {
+          await startScanningWithPermission();
+        } else if (status.state === 'prompt') {
+          // Request camera permission
+          await navigator.mediaDevices.getUserMedia({ video: true });
+          await startScanningWithPermission();
+        } else {
+          console.error('Camera permission denied');
         }
+      } catch (err) {
+        console.error('Error accessing camera:', err);
       }
-    });
+    }
+
+    async function startScanningWithPermission() {
+      codeReader.listVideoInputDevices()
+        .then((videoInputDevices) => {
+          const sourceSelect = videoInputDevices.filter(device => device.kind === 'videoinput');
+          if (sourceSelect.length > 0) {
+            codeReader.decodeFromVideoDevice(selectedDeviceId, 'interactive', (result, err) => {
+              if (result) {
+                alert(`Barcode detected: ${result.text}`);
+                // Add your custom logic here to handle the barcode data
+                console.log(result.text);
+              }
+              if (err) {
+                console.error(err);
+              }
+            });
+          } else {
+            console.error('No video devices found.');
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    }
+
+    startScanner();
   </script>
 </body>
 </html>
